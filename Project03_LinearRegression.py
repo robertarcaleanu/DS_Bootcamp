@@ -19,7 +19,7 @@ sns.jointplot(df,x='Time on App', y='Length of Membership', kind='hex')
 
 sns.pairplot(df)
 
-# Yearly amount spent and lenght of membership are correlated
+# Yearly amount spent and length of membership are correlated
 sns.lmplot(df, x='Length of Membership', y='Yearly Amount Spent')
 
 # Split the data
