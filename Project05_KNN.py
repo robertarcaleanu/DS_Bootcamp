@@ -47,8 +47,8 @@ for i in range(1, 40):
     pred_i = knn.predict(X_test)
     error_rate.append(np.mean(pred_i != Y_test))
 
-plt.figure(figsize=(10,6))
-plt.plot(range(1,40), error_rate, color='blue', linestyle='dashed', marker='o', markerfacecolor='red', markersize=10)
+plt.figure(figsize=(10, 6))
+plt.plot(range(1, 40), error_rate, color='blue', linestyle='dashed', marker='o', markerfacecolor='red', markersize=10)
 plt.title('Error Rate vs. K Value')
 plt.xlabel('K')
 plt.ylabel('Error Rate')
