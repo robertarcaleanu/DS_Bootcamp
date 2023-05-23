@@ -1,4 +1,4 @@
-# import tensorflow as tf
+import tensorflow as tf
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -61,7 +61,7 @@ df.drop('zipcode', axis=1, inplace=True)
 # Year renovated
 df['yr_renovated'].value_counts()
 sns.scatterplot(data=df, x='yr_renovated', y='price')
-# We'll leave the renovated year since we can have a correlation between it and price
+# We'll leave the renovated year since we can have a correlation between year and price
 # df.loc[df['yr_renovated'] > 0, 'yr_renovated'] = 1
 
 # Basement - We'll keep it continuous
@@ -80,7 +80,24 @@ scaler = MinMaxScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
+# from tensorflow.keras.models import Sequential
+# from tensorflow.keras.layers import Dense
+
+model = tf.keras.models.Sequential()
+model.add(tf.keras.layers.Dense(19, activation='relu')) # 19 neurons as we have 19 features
+model.add(tf.keras.layers.Dense(19, activation='relu'))
+model.add(tf.keras.layers.Dense(19, activation='relu'))
+model.add(tf.keras.layers.Dense(19, activation='relu'))
+model.add(tf.keras.layers.Dense(1)) # output
 
 
+model.compile(optimizer='adam', loss='mse')
+model.fit(X_train, y_train,
+          validation_data=(X_test, y_test),
+          batch_size=128,
+          epochs=400)
+
+losses = pd.DataFrame(model.history.history)
+losses.plot()
+
+from sklearn.metrics import mean_squared_error, mean_absolute_error, explained_variance_score
