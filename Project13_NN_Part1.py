@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# Load the data
+# Load the data - Regression exercise
 pd.set_option('display.max_columns', 24)
 df = pd.read_csv("C:/Users/rober/OneDrive/Escriptori/DataSets/Python/Refactored_Py_DS_ML_Bootcamp-master/22-Deep Learning/TensorFlow_FILES/DATA/kc_house_data.csv")
 df.head()
@@ -101,3 +101,25 @@ losses = pd.DataFrame(model.history.history)
 losses.plot()
 
 from sklearn.metrics import mean_squared_error, mean_absolute_error, explained_variance_score
+predictions = model.predict(X_test)
+print(mean_squared_error(y_test, predictions))
+print(np.sqrt(mean_squared_error(y_test, predictions)))
+print(mean_absolute_error(y_test, predictions))
+
+# Compare to average price
+df['price'].describe()
+
+print(explained_variance_score(y_test, predictions)) # 1.0 is the best
+plt.scatter(y_test, predictions)
+plt.plot(y_test, y_test, 'r')
+
+# Apply to a new input
+
+single_house = df.drop('price', axis=1).iloc[0]
+
+# Scale the values
+single_house = scaler.transform(single_house.values.reshape(1, 19))
+
+single_house_predicted_price = model.predict(single_house)
+df.iloc[0]
+
