@@ -64,10 +64,12 @@ plt.close()
 df_FandG = df[(df['grade'] == 'F') | (df['grade'] == 'G')]
 sns.countplot(data=df_FandG,
               x='sub_grade', order=np.sort(df_FandG['sub_grade'].unique()), palette='coolwarm', hue='loan_status')
+plt.close()
 
 df.loc[df['loan_status'] == 'Fully Paid', 'load_repaid'] = int(1)
 df.loc[df['loan_status'] == 'Charged Off', 'load_repaid'] = int(0)
 df[['loan_status', 'load_repaid']]
+df = df.drop('loan_status', axis=1)
 
 df.corr()['load_repaid'].sort_values()[:-1].plot(kind='bar')
 
@@ -78,8 +80,8 @@ df.shape
 # Missing values
 df.isnull().sum()
 df.isnull().sum()/df.shape[0] * 100
-sns.heatmap(data=df.isnull())
-plt.close()
+# sns.heatmap(data=df.isnull())
+# plt.close()
 
 feat_info('emp_title') # Job titles
 df['emp_title'].nunique() # To many - we may drop the column
@@ -143,7 +145,6 @@ df['total_acc'].value_counts()
 total_acc_avg = df.groupby('total_acc').mean()['mort_acc']
 total_acc_avg[2.0]
 
-
 def fill_mort_acc(total_acc, mort_acc):
     '''
     Accepts the total_acc and mort_acc values for the row.
@@ -170,20 +171,66 @@ df.select_dtypes(exclude='number').columns
 df[df.select_dtypes(exclude='number').columns].head()
 
 # Term
+df['term'].value_counts()
+df['term'] = df['term'].apply(lambda x: int(x[:3]))
+df['term'].value_counts()
 
-# Grade
+# Grade - it's part of subgrade
+df = df.drop('grade', axis=1)
 
-# Subgrade
-
+# Subgrade - One hot encoding
+subgrade_encoded = pd.get_dummies(data=df['sub_grade'], drop_first=True)
+df = pd.concat([df.drop('sub_grade', axis=1), subgrade_encoded], axis=1)
+df.columns
+df.select_dtypes(['object']).columns
 
 # Home_ownership
+df['home_ownership'].value_counts()
+df.loc[df['home_ownership'].isin(['NONE', 'ANY']), 'home_ownership'] = 'OTHER'
+df['home_ownership'].value_counts()
+
+home_ownership_encoded = pd.get_dummies(df['home_ownership'], drop_first=True)
+df = pd.concat([df.drop('home_ownership', axis=1), home_ownership_encoded], axis=1)
+df.columns
+df.select_dtypes(['object']).columns
 
 # verification_status, application_type,initial_list_status,purpose
+df['verification_status'].value_counts()
+df['application_type'].value_counts()
+df['initial_list_status'].value_counts()
+df['purpose'].value_counts()
+
+dummies = pd.get_dummies(df[['verification_status', 'application_type', 'initial_list_status', 'purpose']], drop_first=True)
+df = df.drop(['verification_status', 'application_type', 'initial_list_status', 'purpose'], axis=1)
+df = pd.concat([df, dummies], axis=1)
+df.columns
+df.select_dtypes(['object']).columns
 
 # Address
+df['address'].head()
+df['address'] = df['address'].apply(lambda x: int(x[-5:])) # we get the zip code
+df['address'].value_counts()
+
+df = pd.concat([df.drop('address', axis=1), pd.get_dummies(data=df['address'])], axis=1)
+df.columns
+df.select_dtypes(['object']).columns
+
+# Issue_d
+feat_info('issue_d') # we need to remove as it leaking data
+df['issue_d'].head()
+df = df.drop('issue_d', axis=1)
 
 # Earliest_cr_line
+feat_info('earliest_cr_line')
+df['earliest_cr_line'].head()
+df['earliest_cr_year'] = df['earliest_cr_line'].apply(lambda x: int(x[-4:]))
+df['earliest_cr_year'].value_counts()
+df['earliest_cr_year'].plot(kind='box')
 
+df = df.drop(['earliest_cr_line'], axis=1)
+
+df.columns
+df.select_dtypes(['object']).columns
 
 # Train test split ---
 
