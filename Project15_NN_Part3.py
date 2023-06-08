@@ -69,7 +69,7 @@ plt.close()
 df.loc[df['loan_status'] == 'Fully Paid', 'load_repaid'] = int(1)
 df.loc[df['loan_status'] == 'Charged Off', 'load_repaid'] = int(0)
 df[['loan_status', 'load_repaid']]
-df = df.drop('loan_status', axis=1)
+
 
 df.corr()['load_repaid'].sort_values()[:-1].plot(kind='bar')
 
@@ -228,12 +228,58 @@ df['earliest_cr_year'].value_counts()
 df['earliest_cr_year'].plot(kind='box')
 
 df = df.drop(['earliest_cr_line'], axis=1)
-
+df = df.drop('loan_status', axis=1)
 df.columns
 df.select_dtypes(['object']).columns
 
 # Train test split ---
+from sklearn.model_selection import train_test_split
+df.rename(columns={'load_repaid': 'loan_repaid'}, inplace=True)
+X = df.drop('loan_repaid', axis=1).values
+y = df['loan_repaid'].values
 
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=101)
 
+# Normalise the data
+from sklearn.preprocessing import MinMaxScaler
+scaler = MinMaxScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Create the model
+model = tf.keras.models.Sequential()
+
+model.add(tf.keras.layers.Dense(79, activation='relu'))
+model.add(tf.keras.layers.Dropout(0.2))
+model.add(tf.keras.layers.Dense(39, activation='relu'))
+model.add(tf.keras.layers.Dropout(0.2))
+model.add(tf.keras.layers.Dense(19, activation='relu'))
+model.add(tf.keras.layers.Dropout(0.2))
+model.add(tf.keras.layers.Dense(1, activation='sigmoid')) # Binary classification
+
+model.compile(loss='binary_crossentropy', optimizer='adam')
+early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=5) # We want to minimise the validation loss
+model.fit(X_train, y_train, epochs=25, validation_data=(X_test, y_test), callbacks=[early_stop], batch_size=256)
+# model.fit(X_train, y_train, epochs=25, validation_data=(X_test, y_test), batch_size=256)
+
+model_loss = pd.DataFrame(model.history.history)
+model_loss.plot()
+
+# Predict values
+predictions = (model.predict(X_test) > 0.5).astype('int32')
 
 # Evaluating Model Performance ----
+from sklearn.metrics import confusion_matrix, classification_report
+print(confusion_matrix(y_test, predictions))
+print(classification_report(y_test, predictions))
+
+# Predict new customer
+import random
+random.seed(101)
+random_ind = random.randint(0, len(df))
+
+new_customer = df.drop('loan_repaid', axis=1).iloc[random_ind]
+new_customer
+
+(model.predict(new_customer.values.reshape(1, 79)) > 0.5).astype('int32')
+df.iloc[random_ind]['loan_repaid']
